@@ -1,0 +1,147 @@
+
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+Gender Based Bar Charts
+</head>
+<body>
+<form>
+        <input id="textbox" type="text" />
+</form>
+<button id  = 'sub' onclick="buttonEvent()"> Submit </button>
+<script>
+	var attr;
+        attr = 'Age_Group'
+        function buttonEvent(){
+        attr = document.getElementById("textbox").value;
+        d3.selectAll('svg').remove();
+        start();
+        }
+</script>
+
+<!-- load the d3.js library -->    	
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+function start(){
+console.log('yes')
+// set the dimensions and margins of the graph
+var margin = {top: 20, right: 20, bottom: 30, left: 40},
+    width = 1300 - margin.left - margin.right,
+    height = 250 - margin.top - margin.bottom;
+
+// set the ranges
+var x = d3.scaleBand()
+          .range([0, width])
+          .padding(0.1);
+var y = d3.scaleLinear()
+          .range([height, 0]);
+          
+// append the svg object to the body of the page
+// append a 'group' element to 'svg'
+// moves the 'group' element to the top left margin
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", 
+          "translate(" + margin.left + "," + margin.top + ")");
+  var dict = {}
+  var dict2 = {}
+// get the data
+d3.csv("erh.csv", function(error, data) {
+  //console.log(data.map(function(value,index){ return value['Gender']}));
+  if (error) throw error;
+  for (var i=0;i<data.length;i++){
+   if (data[i]['Gender'] == 'MALE'){
+      if(data[i][attr] in dict) dict[data[i][attr]]+=1;
+      else dict[data[i][attr]] = 0;
+   }
+   else{
+      if(data[i][attr] in dict2) dict2[data[i][attr]]+=1;
+      else dict2[data[i][attr]] = 0;
+   }
+  }
+  
+  // Scale the range of the data in the domains
+  x.domain(Object.keys(dict).map(function(d) { return d; }));
+  //y.domain(Math.max.apply(Math, Object.keys(dict).map(function(d) { return dict[d]; })));
+  y.domain([0, d3.max(Object.keys(dict), function(d) { return dict[d]; })]);
+
+  // append the rectangles for the bar chart
+  svg.selectAll(".bar")
+      .data(Object.keys(dict))
+    .enter().append("rect")
+      .attr("class", "bar")
+       .attr("fill", "blue")
+      .attr("x", function(d) { return x(d); })
+      .attr("width", x.bandwidth())
+      .attr("y", function(d) { return y(dict[d]); })
+      .attr("height", function(d) { return height - y(dict[d]); });
+
+  // add the x Axis
+  svg.append("g")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x));
+
+  // add the y Axis
+  svg.append("g")
+      .call(d3.axisLeft(y));
+
+});
+
+
+// set the ranges
+var x2 = d3.scaleBand()
+          .range([0, width])
+          .padding(0.1);
+var y2 = d3.scaleLinear()
+          .range([height, 0]);
+          
+// append the svg object to the body of the page
+// append a 'group' element to 'svg'
+// moves the 'group' element to the top left margin
+var svg2 = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", 
+          "translate(" + margin.left + "," + margin.top + ")");
+
+// get the data
+d3.csv("erh.csv", function(error, data) {
+  //console.log(data.map(function(value,index){ return value['Gender']}));
+  if (error) throw error;
+  
+  // Scale the range of the data in the domains
+  x2.domain(Object.keys(dict2).map(function(d) { return d; }));
+  //y.domain(Math.max.apply(Math, Object.keys(dict).map(function(d) { return dict[d]; })));
+  y2.domain([0, d3.max(Object.keys(dict2), function(d) { return dict2[d]; })]);
+
+  // append the rectangles for the bar chart
+  svg2.selectAll(".bar")
+      .data(Object.keys(dict))
+    .enter().append("rect")
+      .attr("class", "bar")
+	.attr("fill", "red")
+      .attr("x", function(d) { return x2(d); })
+      .attr("width", x2.bandwidth())
+      .attr("y", function(d) { return y2(dict2[d]); })
+      .attr("height", function(d) { return height - y2(dict2[d]); });
+
+  // add the x Axis
+  svg2.append("g")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x2));
+
+  // add the y Axis
+  svg2.append("g")
+      .call(d3.axisLeft(y2));
+
+});
+}
+start();
+</script>
+
+
+</body>
+
