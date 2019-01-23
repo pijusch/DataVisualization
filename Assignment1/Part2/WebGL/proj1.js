@@ -61,7 +61,7 @@ function normalize_coords(){
         gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, squareVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
         gl.bindBuffer(gl.ARRAY_BUFFER, squareVertexColorBuffer);
         gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, squareVertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
-	gl.drawArrays(gl.POINTS,0,vertices.length/15);
+	gl.drawArrays(gl.POINTS,0,vertices.length/3);
 
 
 	setBVertices();
@@ -83,6 +83,12 @@ function normalize_coords(){
  function setBVertices(){ /** Vertices for background lines**/
     bVertices = [];
    bVertices = bVertices.concat([0,0,0,0,19,0,0,0,0,1,0,0]);
+   for (var i= 1; i<20;i++){
+    bVertices = bVertices.concat([i/20,-0.2,0,i/20,0.2,0])
+   }
+   for (var i= 1; i<20;i++){
+    bVertices = bVertices.concat([-.2/20,i,0,0.2/20,i,0])
+   }
    bVertices = normalize(bVertices);
    
  }
@@ -91,6 +97,9 @@ function normalize_coords(){
   for (var i = 0;i<bVertices.length/3;i++){
 	bColors = bColors.concat([0,0,0,1]);
   }
+  for (var i= 0; i<19;i++){
+    bColors = bColors.concat([0,0,0,1]);
+   }
   return bColors;
  }
 

@@ -2,24 +2,23 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <head>
-<center> <h1> Gender Based Bar Charts </h1> </center>
+<h1>Gender Based Bar Charts</h1>
 </head>
 <body>
-Type in the Attribute Name
 <form>
         <input id="textbox" type="text" />
 </form>
-<button id  = 'sub' onclick="buttonEvent()"> Enter </button>
+<button id  = 'sub' onclick="buttonEvent()"> Submit </button>
 <script>
 	var attr;
-        attr = 'Gender'
+        attr = 'Age_Group'
         function buttonEvent(){
         attr = document.getElementById("textbox").value;
         d3.selectAll('svg').remove();
         start();
         }
 </script>
-<canvas id="headcanvas" style="border: 0;" width="1300" height="70"></canvas>
+
 <!-- load the d3.js library -->    	
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script>
@@ -49,23 +48,19 @@ var svg = d3.select("body").append("svg")
   var dict = {}
   var dict2 = {}
 // get the data
-d3.csv("ehr.csv", function(error, data) {
+d3.csv("erh.csv", function(error, data) {
   //console.log(data.map(function(value,index){ return value['Gender']}));
   if (error) throw error;
   for (var i=0;i<data.length;i++){
-   if (data[i][attr] in dict){
    if (data[i]['Gender'] == 'MALE'){
-      dict[data[i][attr]]+=1;
+      if(data[i][attr] in dict) dict[data[i][attr]]+=1;
+      else dict[data[i][attr]] = 0;
+   }
+   else{
+      if(data[i][attr] in dict2) dict2[data[i][attr]]+=1;
+      else dict2[data[i][attr]] = 0;
    }
   }
-  else dict[data[i][attr]] = 0;
-   if (data[i][attr] in dict2){
-     if (data[i]['Gender'] == 'FEMALE'){
-      dict2[data[i][attr]]+=1;
-   }
-  }
-  else dict2[data[i][attr]] = 0;
- }
   
   // Scale the range of the data in the domains
   x.domain(Object.keys(dict).map(function(d) { return d; }));
@@ -87,23 +82,10 @@ d3.csv("ehr.csv", function(error, data) {
   svg.append("g")
       .attr("transform", "translate(0," + height + ")")
       .call(d3.axisBottom(x));
-  svg.append("text")             
-      .attr("transform",
-            "translate(" + 700 + " ," + 
-                           227 + ")")
-      .style("text-anchor", "middle")
-      .text(attr);
 
   // add the y Axis
   svg.append("g")
       .call(d3.axisLeft(y));
-  svg.append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("y", -45)
-      .attr("x",0 - (height / 2))
-      .attr("dy", "1em")
-      .style("text-anchor", "middle")
-      .text("Counts");
 
 });
 
@@ -150,41 +132,14 @@ d3.csv("erh.csv", function(error, data) {
   svg2.append("g")
       .attr("transform", "translate(0," + height + ")")
       .call(d3.axisBottom(x2));
-  svg2.append("text")             
-      .attr("transform",
-            "translate(" + 700 + " ," + 
-                           227 + ")")
-      .style("text-anchor", "middle")
-      .text(attr);
 
   // add the y Axis
   svg2.append("g")
       .call(d3.axisLeft(y2));
-  svg2.append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("y", -45)
-      .attr("x",0 - (height / 2))
-      .attr("dy", "1em")
-      .style("text-anchor", "middle")
-      .text("Counts"); 
 
 });
 }
 start();
-</script>
-<script>
-var c = document.getElementById("headcanvas");
-	var ctx = c.getContext("2d");
-	ctx.fillStyle = "black";
-	ctx.fill();
-	ctx.fillText("MALE", 920, 50);
-	ctx.fillText("FEMALE", 920, 70);
-	ctx.fillStyle = "red";
-	ctx.fill();
-	ctx.fillRect(900, 43, 6, 6);
-	ctx.fillStyle = "blue";
-	ctx.fill();
-	ctx.fillRect(900, 63, 6, 6);
 </script>
 
 
