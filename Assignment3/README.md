@@ -13,7 +13,16 @@ Design Excercise
 <li> We plot the information of all patients (encounter type, disease timeline, age etc) on a 2D plot. The x-axis represents the temporal information and y axis represents different patients (without ordering).
 </li>
 
-<li> The figures in this folder give the design that we came up with. Please find the detailed review of the design in DesignReview.pdf file.
+<li> The figures in this folder give the design that we came up with. Please find the detailed review of the design in DesignDiscussion.pdf file.
 </li> 
 
 </ol>
+
+<h1> Steps for running code </h1>
+
+<ol>
+
+<li> Start a server on python </li>
+<li> Open the files in folder 'Source' </li>
+<li> The first row of buttons give the ordering for patients</li>
+<li> 'Incremental size'button (only Baseline graph) switches the 'Incremental Size' mode On and Off.

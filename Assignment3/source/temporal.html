@@ -1,0 +1,303 @@
+<html>
+<head>
+    <title>Temporal</title>
+</head>
+<body>
+<h1> Select Y-Axis Ordering </h1>
+<button onclick="myFunction(0)">ID Number</button>
+<button onclick="myFunction(1)">Earliest First Encounter before TBI</button>
+<button onclick="myFunction(2)">Effective Position of TBI in the timeline</button>
+<button onclick="myFunction(3)">Number of Encounters</button>
+<svg width='2300' height='1300'></svg>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<ul></ul>
+
+<script>
+function myFunction(ind) {
+  new_key = ind;
+  temporal();
+}
+var sorting_key = 0;
+var new_key = 0
+
+    d3.select('h3').style('color', 'darkblue');
+    d3.select('h3').style('font-size', '24px');
+
+function temporal(){
+d3.select('svg').selectAll("*").remove();
+d3.csv("ehr.csv").then(function(data) {
+function sortFunction(a, b) {
+    if (a[sorting_key] === b[sorting_key]) {
+        return 0;
+    }
+    else {
+        return (a[sorting_key] < b[sorting_key]) ? -1 : 1;
+    }
+}
+
+
+  d3.select('svg').append("rect")
+  .attr("x", 100)
+  .attr("y", 210)
+  .attr("height", 950)
+  .attr("width", 1750)
+  .style("stroke", 'black')
+  .style("fill", "grey")
+  .style("stroke-width", 1);
+
+
+  var color_dict = {0:'#C0392B',1:'#BB8FCE',2:'#EC7063',3:'#330019',4:'#F8C471',5:'#73C6B6',6:'#641E16',7:'#5B2C6F',8:'#1A5276',9:'#BA4A00',10:'#212F3D',11:'#27AE60',12:'#6E2C00',13:'#FADBD8',14:'#7D6608',15:'#7D6608',16:'grey'}
+
+  var issue_name = ['Stress', 'PTSD',
+       'Speech', 'Anxiety', 'Depression', 'Headache', 'Sleep', 'Audiology',
+       'Vision', 'Neurologic', 'Alzheimer', 'Cognitive', 'PCS', 'Endocrine'];	
+
+
+  var ids = [ ...new Set(data.map(function(d){ return d['PatientID']}))];
+for (i=0;i<ids.length;i++) ids[i] = parseInt(ids[i]);
+var ids_sorting = [];
+
+  ids.sort(function(a,b) {
+  return (+a) - (+b);
+});
+  var data_dict = new Object();
+  for( i=1;i<data.length;i++){
+   var c = 16;
+   for( j=0;j<issue_name.length;j++){
+     if (data[i][issue_name[j]]==1){
+		c = j;
+	}
+   }
+   if(1){
+   if (!(data[i]['PatientID'] in data_dict)){
+	data_dict[data[i]['PatientID']] = [[parseInt(data[i]['Days_From1stTBI']),c]];
+    }
+   else{
+	data_dict[data[i]['PatientID']].push([parseInt(data[i]['Days_From1stTBI']),c]);
+   }
+   }
+}
+
+//displacement 
+  var disp = new Object;
+  max_tbi = -1;
+  for(i=0;i<ids.length;i++){
+   sorting_key = 0;
+   data_dict[ids[i]].sort(sortFunction)
+   var c  = 0;
+   for(j=0;j<data_dict[ids[i]].length;j++){
+    if (data_dict[ids[i]][j][0] == 0){
+	c = j;
+	disp[ids[i]] = c;
+ 	break;
+	}
+   }
+    if (c>max_tbi)	max_tbi = c;
+  }
+
+  var int_dict = new Object;
+  
+ for(i=0;i<ids.length;i++){
+	ids_sorting.push([ids[i],data_dict[ids[i]][0][0],disp[ids[i]],data_dict[ids[i]].length]);
+         console.log(data_dict[ids[i]].length)
+  }
+  sorting_key = new_key;
+  ids_sorting.sort(sortFunction);
+  console.log(ids_sorting);
+  var new_disp = new Object;
+  for (i=0;i<ids.length;i++) { ids[i] = ids_sorting[i][0]; new_disp[ids_sorting[i][0]] = ids_sorting[i][2];}
+	
+
+
+  for (i=0;i<ids.length;i++){
+	int_dict[ids[i]] = [];
+	for(j=1;j<data_dict[ids[i]].length;j++){
+		var op = 1;
+	   	if (data_dict[ids[i]][j-1][0] < 0) op = 0.6;
+		int_dict[ids[i]].push([data_dict[ids[i]][j-1][0],data_dict[ids[i]][j][0],data_dict[ids[i]][j][1],op])
+	}
+   }
+
+  for(i=0;i<ids.length;i++){
+   disp[ids[i]] = max_tbi - disp[ids[i]];
+  }
+
+
+
+  var c = 0;
+  for(ind=0;ind<ids.length;ind++){
+  c = 0;
+  var len = data_dict[ids[ind]].length;
+  d3.select('svg')
+  .append('rect')
+	  .attr("fill",'none')
+          .attr('width', (data_dict[ids[ind]][len-1][0] - data_dict[ids[ind]][0][0])/3)
+          .attr('height', 20)
+          .attr('transform', "translate("+(600+2743+data_dict[ids[ind]][0][0])/3 +","+(ind*23+220)+")")
+		.style("stroke-width", 1);
+  var bar = d3.select('svg')
+          .selectAll('rec')
+          .data(int_dict[ids[ind]])
+          .enter()
+          .append('rect')
+	  .attr("fill",function(d){ return color_dict[d[2]]})
+	  .attr("fill-opacity",function(d){ return d[3];})
+          .attr('width', function(d){ return (d[1]-d[0])/3;})
+          .attr('height', 15)
+          .attr('transform', function(d, i) {
+  	    c+=1;
+            return "translate("+(600+d[0]+2743)/3 +","+(ind*23+220)+")";
+          });
+  }
+
+var line_dict = new Object;
+
+for (i = 0;i<ids.length;i++){
+ line_dict[ids[i]] =  []
+ for(j=0;j<int_dict[ids[i]].length;j++){
+	if (int_dict[ids[i]][j][2] == 16)
+	line_dict[ids[i]].push([int_dict[ids[i]][j][0],int_dict[ids[i]][j][1]])
+ }
+}
+
+console.log(data_dict[3822317])
+
+for(ind=0;ind<ids.length;ind++){
+  c = 0;
+  var len = data_dict[ids[ind]].length;
+  var bar = d3.select('svg')
+          .selectAll('rec')
+          .data(line_dict[ids[ind]])
+          .enter()
+          .append('rect')
+	  .attr("fill",function(d){ return 'black'})
+	  .attr("fill-opacity",function(d){ return d[3];})
+          .attr('width', function(d){ return (d[1]-d[0])/3;})
+          .attr('height', 1)
+          .attr('transform', function(d, i) {
+  	    c+=1;
+            return "translate("+(600+d[0]+2743)/3 +","+(ind*23+228)+")";
+          });
+  }
+
+for(ind=0;ind<ids.length;ind++){
+  c = 0;
+  var len = data_dict[ids[ind]].length;
+  var bar = d3.select('svg')
+          .selectAll('rec')
+          .data(line_dict[ids[ind]])
+          .enter()
+          .append('rect')
+	  .attr("fill",function(d){ return 'black'})
+	  .attr("fill-opacity",function(d){ return d[3];})
+          .attr('width', 1)
+          .attr('height', 5)
+          .attr('transform', function(d, i) {
+  	    c+=1;
+            return "translate("+(600+d[0]+2743)/3 +","+(ind*23+226)+")";
+          });
+  }
+
+
+
+   var idticks = d3.select('svg')
+          .selectAll('idticks')
+          .data(ids)
+          .enter()
+          .append('text')
+                 .text( function (d) { return d; })
+                 .attr("font-family", "sans-serif")
+                 .attr("font-size", "20px")
+                 .attr("fill", "black")
+          .attr('transform', function(d, i) {
+            return "translate("+(10) +","+(i*23+235)+")";
+          });
+
+   d3.select('svg')
+          .selectAll('idticks')
+          .data(ids)
+          .enter()
+          .append('line')
+          .attr("x1", 95)
+          .attr("x2", 105)
+	  .attr('y1',function(d,i){ return i*23+230;})
+	  .attr('y2',function(d,i){ return i*23+230;})
+	  .attr('style',"stroke:rgb(0,0,0);stroke-width:2");
+
+
+   d3.select('svg')
+          .selectAll('xticks')
+          .data(new Array(14))
+          .enter()
+          .append('line')
+          .attr("x1", function(d,i){ return 200+i*365/3;})
+          .attr("x2", function(d,i){ return 200+i*365/3;})
+	  .attr('y1', 1155)
+	  .attr('y2',1165)
+	  .attr('style',"stroke:rgb(0,0,0);stroke-width:2");
+
+
+  d3.select('svg').append("rect")
+  .attr("x", 1850)
+  .attr("y", 210)
+  .attr("height", 570)
+  .attr("width", 180)
+  .style("stroke", 'black')
+  .style("fill", "none")
+  .style("stroke-width", 1);
+
+var leg = d3.select('svg')
+          .selectAll('leg')
+          .data(issue_name)
+          .enter()
+          .append('rect')
+          .attr("fill",function(d,i){ return color_dict[i]})
+          .attr('width', 30)
+          .attr('height', 30)
+          .attr('transform', function(d, i) {
+            return "translate("+(1870) +","+(i*40+220)+")";
+          });
+
+var leg = d3.select('svg')
+          .selectAll('leg')
+          .data(issue_name)
+          .enter()
+          .append('text')
+ 	  .text( function (d) { return d; })
+          .attr("font-family", "sans-serif")
+          .attr("font-size", "20px")
+          .attr("fill", "black")
+          .attr('transform', function(d, i) {
+            return "translate("+(1920) +","+(i*40+243)+")";
+          });
+
+  d3.select('svg').append('text')
+  .text( 'Temporal Graph')
+          .attr("font-family", "sans-serif")
+          .attr("font-size", "100px")
+          .attr("fill", "black")
+          .attr('transform', function(d, i) {
+            return "translate("+(700) +","+(100)+")"});
+
+  d3.select('svg').append('line')
+   .attr('x1',1113)
+   .attr('x2',1113)
+	.attr('y1',210)
+	.attr('y2',1160)
+	.attr('style',"stroke:white;stroke-width:3;")
+
+d3.select('svg').append('text')
+  .text( 'Day of TBI')
+          .attr("font-family", "sans-serif")
+          .attr("font-size", "20px")
+          .attr("fill", "black")
+          .attr('transform', function(d, i) {
+            return "translate("+(1060) +","+(1180)+")"});
+
+ 
+});
+}
+
+</script>
+</body>
+</html>
