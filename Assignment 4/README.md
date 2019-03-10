@@ -7,6 +7,6 @@
 <ol>
 
 <li> Start a server on python </li>
-<li> Open the files in folder 'Source' </li>
-<li> The first row of buttons give the ordering for patients</li>
-<li> 'Incremental size'button (only Baseline graph) switches the 'Incremental Size' mode On and Off.
+<li> Open the folder 'Assignment 4' </li>
+<li> Open the file 'vector.html' (the data has been processed into a csv called new.csv)</li>
+<li> The button functionality information is given in documentation.pdf</li>
