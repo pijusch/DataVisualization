@@ -1,0 +1,324 @@
+<html>
+<head>
+    <title>Baseline</title>
+</head>
+<body>
+<h1> Select Y-Axis Ordering </h1>
+<button onclick="myFunction(0)">ID Number</button>
+<button onclick="myFunction(1)">Earliest First Encounter before TBI</button>
+<button onclick="myFunction(2)">Effective Position of TBI in the timeline</button>
+<button onclick="myFunction(3)">Number of Encounters</button>
+<h1> Incremental size </h1>
+<button onclick="myFunction(4)">Click here</button>
+<svg width='2300' height='1500'></svg>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<ul></ul>
+
+<script>
+var incremental = 0;
+var last_ind = 0;
+function myFunction(ind) {
+  if (ind ==4){
+    incremental = 1 - incremental;
+	baseline();
+  }
+  else{
+  new_key = ind;
+  last_ind  = ind;
+  baseline();
+  }
+}
+
+var sorting_key = 0;
+var new_key = 0
+
+    d3.select('h3').style('color', 'darkblue');
+    d3.select('h3').style('font-size', '24px');
+
+baseline();
+function baseline(){
+d3.csv("ehr.csv").then(function(data) {
+d3.csv("inputs").then(function(input){
+d3.select('svg').selectAll("*").remove();
+var input_num = input.length;
+
+function sortFunction(a, b) {
+    if (a[sorting_key] === b[sorting_key]) {
+        return 0;
+    }
+    else {
+        return (a[sorting_key] < b[sorting_key]) ? -1 : 1;
+    }
+}
+
+
+  d3.select('svg').append("rect")
+  .attr("x", 120)
+  .attr("y", 210)
+  .attr("height", 950)
+  .attr("width", 1750)
+  .style("stroke", 'black')
+  .style("fill", "grey")
+  .style("stroke-width", 1);
+
+
+
+  var color_dict = {0:'#C0392B',1:'#BB8FCE',2:'#EC7063',3:'#330033',4:'#F8C471',5:'#73C6B6',6:'#641E16',7:'#5B2C6F',8:'#1A5276',9:'#BA4A00',10:'#212F3D',11:'#27AE60',12:'#6E2C00',13:'#FADBD8',14:'#7D6608',15:'#7D6608',16:'#D0D3D4'}
+
+  var issue_name = ['Stress', 'PTSD',
+       'Speech', 'Anxiety', 'Depression', 'Headache', 'Sleep', 'Audiology',
+       'Vision', 'Neurologic', 'Alzheimer', 'Cognitive', 'PCS', 'Endocrine'];
+
+var issue_dict = {'Stress':0, 'PTSD':1,
+       'Speech':2, 'Anxiety':3, 'Depression':4, 'Headache':5, 'Sleep':6, 'Audiology':7,
+       'Vision':8, 'Neurologic':9, 'Alzheimer':10, 'Cognitive':11, 'PCS':12, 'Endocrine':13};	
+
+
+  var ids = [ ...new Set(data.map(function(d){ return d['PatientID']}))];
+  for (i=0;i<ids.length;i++) ids[i] = parseInt(ids[i]);
+  var ids_sorting = [];
+ 
+
+  ids.sort(function(a,b) {
+  return (+a) - (+b);
+});
+  var data_dict = new Object();
+  for( i=0;i<data.length;i++){
+   var c = 16;
+   for( j=0;j<issue_name.length;j++){
+     if (data[i][issue_name[j]]==1){
+		c = j;
+	}
+   }
+   var op = 1;
+   if ( data[i]['Days_From1stTBI'] < 0) op = 0.6;
+   if(c!=16 || data[i]['Days_From1stTBI']==0){
+   if (!(data[i]['PatientID'] in data_dict)){
+	data_dict[data[i]['PatientID']] = [[parseInt(data[i]['Days_From1stTBI']),c,op]];
+    }
+   else{
+	data_dict[data[i]['PatientID']].push([parseInt(data[i]['Days_From1stTBI']),c,op]);
+   }
+   }
+}
+
+d3.select('svg').append('text')
+  .text( 'Patient IDs')
+          .attr("font-family", "sans-serif")
+          .attr("font-size", "20px")
+          .attr("fill", "black")
+          .attr("transform","rotate(-90)")
+	  .attr("x",-800)
+	.attr("y",20);
+
+
+  var disp = new Object;
+  max_tbi = -1;
+  for(i=0;i<ids.length;i++){
+   sorting_key= 0;
+   data_dict[ids[i]].sort(sortFunction)
+   var c  = 0;
+   for(j=0;j<data_dict[ids[i]].length;j++){
+    if (data_dict[ids[i]][j][0] == 0){
+	c = j;
+	disp[ids[i]] = c;
+ 	break;
+	}
+   }
+    if (c>max_tbi)	max_tbi = c;
+  }
+
+  for(i=0;i<ids.length;i++){
+   disp[ids[i]] = max_tbi - disp[ids[i]];
+  }
+
+  for(i=0;i<ids.length;i++){
+	ids_sorting.push([ids[i],data_dict[ids[i]][0][0],disp[ids[i]],data_dict[ids[i]].length])
+  }
+  sorting_key = new_key;
+  sorting_key = last_ind;
+  ids_sorting.sort(sortFunction);
+  var new_disp = new Object;
+  for (i=0;i<ids.length;i++) { ids[i] = ids_sorting[i][0]; new_disp[ids_sorting[i][0]] = ids_sorting[i][2];}
+	//console.log(ids[0])
+	//console.log(data_dict[ids[0]])
+  console.log(input)
+  var glyph_dict = []
+ for(i=0;i<ids.length;i++){
+	temp = []
+	//console.log(ids[i])
+	//console.log(data_dict[ids[i]])
+	for(j=0;j<input_num;j++){
+		temp[j] = [];
+		f = issue_dict[input[j]['First']]
+		s = issue_dict[input[j]['Second']]
+		temp2 = data_dict[ids[i]];
+		//console.log(f)
+		//console.log(s)
+		for(k=0;k<temp2.length;k++){
+			if(k<temp2.length-1 && temp2[k][1]!=temp2[k+1][1]){
+				if(temp2[k][1]==f){
+					l=0;
+					for(l=k+1;l<temp2.length;l++){
+						if(temp2[l][1]==s){
+							temp[j].push(k)
+							l+=1;
+							break;
+						}
+					}
+					k=l;
+				}
+			}
+		}
+	}
+	glyph_dict[ids[i]] = temp;
+ }
+
+
+  var c = 0;
+  for(ind=0;ind<ids.length;ind++){
+  c = 0;
+  var bar = d3.select('svg')
+          .selectAll('rec')
+          .data(data_dict[ids[ind]])
+          .enter()
+          .append('rect')
+	  .attr("fill",function(d){ return color_dict[d[1]]})
+          .attr("fill-opacity",function(d){ return d[2]})
+          .attr('width', 10)
+          .attr('height', function(d,i){ 
+	if (incremental)
+	return 15+i*0.3;
+    else return 15;})
+          .attr('transform', function(d, i) {
+  	    c+=1;
+            return "translate("+(120+new_disp[ids[ind]]*10+c*10.1) +","+(ind*23+220)+")";
+          });
+  }
+
+
+for(i=0;i<ids.length;i++){
+	//break
+	temp = glyph_dict[ids[i]]
+	for(j=0;j<input_num;j++){
+		temp2 = temp[j]
+		for (k=0;k<temp2.length;k++){
+		d3.select('svg').append("image")
+    .attr('xlink:href', 'images/'+String(j)+'.png')
+    .attr('width', 25)
+    .attr('height', 25)
+	.attr('transform','translate('+(120+new_disp[ids[i]]*10+temp2[k]*10.1)+','+(i*23+215)+')');
+		}
+	}
+}
+console.log(glyph_dict)
+
+  d3.select('svg').append("rect")
+  .attr("x", 1870)
+  .attr("y", 210)
+  .attr("height", 570)
+  .attr("width", 180)
+  .style("stroke", 'black')
+  .style("fill", "none")
+  .style("stroke-width", 1);
+
+  d3.select('svg').append("rect")
+  .attr("x", 1870)
+  .attr("y", 780)
+  .attr("height", input_num*50)
+  .attr("width", 300)
+  .style("stroke", 'black')
+  .style("fill", "none")
+  .style("stroke-width", 1);
+
+   var idticks = d3.select('svg')
+          .selectAll('idticks')
+          .data(ids)
+          .enter()
+          .append('text')
+                 .text( function (d) { return d; })
+                 .attr("font-family", "sans-serif")
+                 .attr("font-size", "20px")
+                 .attr("fill", "black")
+          .attr('transform', function(d, i) {
+            return "translate("+(30) +","+(i*23+235)+")";
+          });
+
+   d3.select('svg')
+          .selectAll('idticks')
+          .data(ids)
+          .enter()
+          .append('line')
+          .attr("x1", 115)
+          .attr("x2", 125)
+	  .attr('y1',function(d,i){ return i*23+230;})
+	  .attr('y2',function(d,i){ return i*23+230;})
+	  .attr('style',"stroke:rgb(0,0,0);stroke-width:2");
+
+var leg = d3.select('svg')
+          .selectAll('leg')
+          .data(issue_name)
+          .enter()
+          .append('rect')
+          .attr("fill",function(d,i){ return color_dict[i]})
+          .attr('width', 30)
+          .attr('height', 30)
+          .attr('transform', function(d, i) {
+            return "translate("+(1890) +","+(i*40+220)+")";
+          });
+
+
+var leg = d3.select('svg')
+          .selectAll('leg')
+          .data(issue_name)
+          .enter()
+          .append('text')
+ 	  .text( function (d) { return d; })
+          .attr("font-family", "sans-serif")
+          .attr("font-size", "20px")
+          .attr("fill", "black")
+          .attr('transform', function(d, i) {
+            return "translate("+(1940) +","+(i*40+243)+")";
+          });
+
+for(i=0;i<input_num;i++){
+	d3.select('svg')
+          .append('image')
+	.attr('xlink:href', 'images/'+String(i)+'.png')
+    	.attr('width', 25)
+    	.attr('height', 25)
+	.attr('transform','translate('+(1890)+','+(i*40+800)+')');
+
+	d3.select('svg')
+          .append('text')
+ 	  .text( input[i]['First']+' - '+input[i]['Second'])
+          .attr("font-family", "sans-serif")
+          .attr("font-size", "20px")
+          .attr("fill", "black")
+          .attr('transform', "translate("+(1940) +","+(i*40+815)+")");
+}	
+
+
+
+
+  d3.select('svg').append('line')
+   .attr('x1',1030)
+   .attr('x2',1030)
+	.attr('y1',210)
+	.attr('y2',1160)
+	.attr('style',"stroke:white;stroke-width:3")
+d3.select('svg').append('text')
+  .text( 'Encounter with TBI')
+          .attr("font-family", "sans-serif")
+          .attr("font-size", "20px")
+          .attr("fill", "black")
+          .attr('transform', function(d, i) {
+            return "translate("+(975) +","+(1180)+")"});
+
+
+});
+});
+}
+</script>
+</body>
+</html>
