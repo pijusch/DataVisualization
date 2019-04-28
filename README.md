@@ -1,3 +1,3 @@
-# DataVisulaization
+# DataVisualization
 
 ## Piyush Chawla, chawla.81
